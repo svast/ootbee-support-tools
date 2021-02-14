@@ -1,26 +1,29 @@
 /**
- * Copyright (C) 2016, 2017 Axel Faust
- * Copyright (C) 2016, 2017 Order of the Bee
+ * Copyright (C) 2016 - 2020 Order of the Bee
  *
- * This file is part of Community Support Tools
+ * This file is part of OOTBee Support Tools
  *
- * Community Support Tools is free software: you can redistribute it and/or
+ * OOTBee Support Tools is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation, either version 3 of the License,
  * or (at your option) any later version.
  *
- * Community Support Tools is distributed in the hope that it will be useful,
+ * OOTBee Support Tools is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with Community Support Tools. If not, see
+ * along with OOTBee Support Tools. If not, see
  * <http://www.gnu.org/licenses/>.
+ *
+ * Linked to Alfresco
+ * Copyright (C) 2005 - 2020 Alfresco Software Limited.
  */
 package org.orderofthebee.addons.support.tools.repo.caches;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Map;
@@ -47,7 +50,6 @@ import org.springframework.web.context.ContextLoader;
 import org.springframework.web.context.WebApplicationContext;
 
 import com.google.common.cache.Cache;
-import com.google.common.cache.CacheStats;
 
 /**
  * This utility class abstracts common reverse or reflection-based lookup logic to access low-level cache implementations or statistics
@@ -73,17 +75,30 @@ public class CacheLookupUtils
     {
         ParameterCheck.mandatory("invalidatingCache", invalidatingCache);
 
-        final Field cacheField = invalidatingCache.getClass().getDeclaredField("cache");
-        // will fail in Java 9 but no other way due to private visibility, Enterprise-only class and lack of accessor
-        cacheField.setAccessible(true);
-        final Object internalCache = cacheField.get(invalidatingCache);
+        Object stats;
 
-        if (!(internalCache instanceof DefaultSimpleCache<?, ?>))
+        try
         {
-            throw new IllegalArgumentException("internalCache should be an instance of DefaultSimpleCache");
+            final Field cacheField = invalidatingCache.getClass().getDeclaredField("cache");
+            // may fail in Java 9 but no other way due to private visibility, Enterprise-only class and lack of accessor
+            // (dependent on SecurityManager)
+            cacheField.setAccessible(true);
+            final Object internalCache = cacheField.get(invalidatingCache);
+
+            if (!(internalCache instanceof DefaultSimpleCache<?, ?>))
+            {
+                throw new IllegalArgumentException("internalCache should be an instance of DefaultSimpleCache");
+            }
+
+            stats = getDefaultSimpleCacheStats((DefaultSimpleCache<?, ?>) internalCache);
+        }
+        catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | SecurityException e)
+        {
+            LOGGER.debug("Error accessing statistics of cache {}", invalidatingCache, e);
+            stats = null;
         }
 
-        return getDefaultSimpleCacheStats((DefaultSimpleCache<?, ?>) internalCache);
+        return stats;
     }
 
     /**
@@ -99,12 +114,23 @@ public class CacheLookupUtils
     {
         ParameterCheck.mandatory("simpleCache", simpleCache);
 
-        final Field mapField = simpleCache.getClass().getDeclaredField("map");
-        // will fail in Java 9 but no other way due to private visibility, Enterprise-only class and lack of accessor
-        mapField.setAccessible(true);
-        final Object internalMap = mapField.get(simpleCache);
-        final Method mapStatsGetter = internalMap.getClass().getMethod("getLocalMapStats");
-        final Object stats = mapStatsGetter.invoke(internalMap);
+        Object stats;
+
+        try
+        {
+            final Field mapField = simpleCache.getClass().getDeclaredField("map");
+            // may fail in Java 9 but no other way due to private visibility, Enterprise-only class and lack of accessor
+            // (dependent on SecurityManager)
+            mapField.setAccessible(true);
+            final Object internalMap = mapField.get(simpleCache);
+            final Method mapStatsGetter = internalMap.getClass().getMethod("getLocalMapStats");
+            stats = mapStatsGetter.invoke(internalMap);
+        }
+        catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | SecurityException e)
+        {
+            LOGGER.debug("Error accessing statistics of cache {}", simpleCache, e);
+            stats = null;
+        }
 
         return stats;
     }
@@ -122,12 +148,24 @@ public class CacheLookupUtils
     {
         ParameterCheck.mandatory("defaultSimpleCache", defaultSimpleCache);
 
-        final Field googleCacheField = DefaultSimpleCache.class.getDeclaredField("cache");
-        // will fail in Java 9 but no other way due to private visibility and lack of accessor
-        googleCacheField.setAccessible(true);
-        final Object googleCache = googleCacheField.get(defaultSimpleCache);
+        Object stats;
 
-        final CacheStats stats = ((Cache<?, ?>) googleCache).stats();
+        try
+        {
+            final Field googleCacheField = DefaultSimpleCache.class.getDeclaredField("cache");
+            // may fail in Java 9 but no other way due to private visibility and lack of accessor
+            // (dependent on SecurityManager)
+            googleCacheField.setAccessible(true);
+            final Object googleCache = googleCacheField.get(defaultSimpleCache);
+
+            stats = ((Cache<?, ?>) googleCache).stats();
+        }
+        catch (IllegalAccessException | SecurityException e)
+        {
+            LOGGER.debug("Error accessing statistics of cache {}", defaultSimpleCache, e);
+            stats = null;
+        }
+
         return stats;
     }
 
@@ -308,7 +346,7 @@ public class CacheLookupUtils
             }
             else
             {
-                cacheHitPercentage = this.getCacheHits() / cacheGets * 100;
+                cacheHitPercentage = 1.0d * this.getCacheHits() / cacheGets * 100;
             }
             return cacheHitPercentage;
         }
@@ -329,7 +367,7 @@ public class CacheLookupUtils
             }
             else
             {
-                cacheMissPercentage = this.getCacheMisses() / cacheGets * 100;
+                cacheMissPercentage = 1.0d * this.getCacheMisses() / cacheGets * 100;
             }
             return cacheMissPercentage;
         }

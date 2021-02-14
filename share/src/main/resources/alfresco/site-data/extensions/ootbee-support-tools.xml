@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension>
+    <modules>
+        <module>
+            <!-- would normally be only \${project.artifactId} but we need the prefix due to lack of namespacing to avoid conflict with Alfresco Support Tools -->
+            <id>ootbee-${project.artifactId}</id>
+            <description>${project.name}</description>
+            <!-- Surf Extension Module version is documentation only -->
+            <!-- arbitrary string supported - incl Maven -SNAPSHOT suffix -->
+            <version>${project.version}</version>
+            <auto-deploy>true</auto-deploy>
+            
+            <!-- nothing here yet -->
+            <customizations>
+                <customization>
+                    <targetPackageRoot>org.alfresco.share.pages.admin-console</targetPackageRoot>
+                    <sourcePackageRoot>org.orderofthebee.support-tools.pages.customisations</sourcePackageRoot>
+                </customization>
+            </customizations>
+        </module>
+    </modules>
+</extension>
