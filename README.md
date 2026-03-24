@@ -23,14 +23,16 @@ In order to use a pre-built SNAPSHOT artifact published to the Open Source Sonat
 ```xml
 <repositories>
     <repository>
-        <id>ossrh</id>
-        <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        <id>central-snapshots</id>
+        <url>https://central.sonatype.com/repository/maven-snapshots/</url>
         <snapshots>
             <enabled>true</enabled>
         </snapshots>
     </repository>
 </repositories>
 ```
+
+**Note:** Previously, SNAPSHOT builds used to be published to the Open Source Sonatype Repository Hosting (OSSRH) site, which has reached end-of-life on June 30th 2025. Any projects that used to reference OSSRH to obtain a SNAPSHOT of this project need to be updated.
 
 ## Repository-tier
 
@@ -91,9 +93,24 @@ We hope to have lots of collaborators on this project. As such, we have outlined
 It is a key goal of our project to foster active participation and collaboration with the greater Alfresco community. To that end we expect folks to conform to our [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md).
 
 # License
-This addon is licensed under the GNU Lesser General Public License (LGPL) similarily to the original work by Antonio Soler. See [LICENSE.md](./LICENSE.md) for the full LGPL license.
+This addon is licensed under the GNU Lesser General Public License (LGPL) v3 similarily to the original work by Antonio Soler. See [LICENSE.md](./LICENSE.md) for the full LGPL license.
 
 Alfresco (base software) - Copyright &copy; Alfresco Software Ltd.
+
+This addon contains code forked from the [JavaScript Console project](https://github.com/share-extras/js-console) developed by Florian Maul, with major contributions from Jens Goldhammer and Axel Faust. The JavaScript Console project is/was licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0). Based on section 4, item d of the Apache License, the modifications made to JavaScript Console source code / derivative work created as part of this fork are (re-)licensed under the GNU Lesser General Public License (LGPL) as the umbrella license for this addon.
+
+This addon contains / packages the following, unaltered open source libraries in at least some of its distribution artifacts (AMP):
+
+- [MenoData Time4J](https://github.com/MenoData/Time4J), GNU Lesser General Public License v2.1
+- [cron-utils](https://github.com/jmrozanec/cron-utils), Apache License, Version 2.0
+- [moment.js](https://momentjs.com/), MIT License
+- [Smoothie Charts](http://smoothiecharts.org/), MIT LIcense
+- [Sizzle.js](http://sizzlejs.com/), [custom "as-is" open license](https://github.com/jquery/sizzle/blob/main/LICENSE.txt)
+- [CodeMirror](https://codemirror.net/), MIT License
+- [js-beautifier](https://beautifier.io/), MIT License
+- [Tern](https://ternjs.net/), MIT License
+- [jsonlint](https://github.com/zaach/jsonlint), MIT License
+- [jquery](https://jquery.com/), MIT License
 
 The Contributor Covenant is released under [Creative Commons Attribution 4.0 International Public License](https://github.com/ContributorCovenant/contributor_covenant/blob/master/LICENSE.md).
 
@@ -101,9 +118,11 @@ Original authors:
 
 - [Axel Faust](https://github.com/AFaust), Acosix / Order of the Bee
 - [Markus Joos](https://github.com/mrksjs), AdNovum
+- Florian Maul, fme AG (JavaScript Console)
 
 Maintainers:
 
 - [Axel Faust](https://github.com/AFaust), Acosix / Order of the Bee
 - [Bindu Wavell](https://github.com/binduwavell), Zia / Order of the Bee
 - [Younes Regaieg](https://github.com/yregaieg), Order of the Bee
+- [Robrecht Vanhuysse](https://github.com/RVanhuysseXenit), Xenit Solutions nv / Order of the Bee

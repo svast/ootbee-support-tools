@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2016 - 2020 Order of the Bee
+ * Copyright (C) 2016 - 2025 Order of the Bee
  *
  * This file is part of OOTBee Support Tools
  *
@@ -18,7 +18,7 @@
  * <http://www.gnu.org/licenses/>.
  *
  * Linked to Alfresco
- * Copyright (C) 2005 - 2020 Alfresco Software Limited.
+ * Copyright (C) 2005 - 2025 Alfresco Software Limited.
  */
 package org.orderofthebee.addons.support.tools.share;
 
@@ -37,7 +37,7 @@ import org.springframework.extensions.webscripts.WebScriptResponse;
 import org.springframework.extensions.webscripts.servlet.FormData;
 
 /**
- * @author Axel Faust, <a href="http://acosix.de">Acosix GmbH</a>
+ * @author Axel Faust
  */
 public class LogFilesZIPPost extends AbstractLogFileWebScript
 {
@@ -66,7 +66,9 @@ public class LogFilesZIPPost extends AbstractLogFileWebScript
         final String[] paths = rqData.getParameters().get("paths");
         filePaths.addAll(Arrays.asList(paths));
 
-        this.logFileHandler.handleLogZipRequest(filePaths, req, res, model);
+        final WebScriptRequestWrapper reqW = new WebScriptRequestWrapper(req);
+        final WebScriptResponseWrapper resW = new WebScriptResponseWrapper(res);
+        this.logFileHandler.handleLogZipRequest(filePaths, () -> reqW, () -> resW, model);
     }
 
 }

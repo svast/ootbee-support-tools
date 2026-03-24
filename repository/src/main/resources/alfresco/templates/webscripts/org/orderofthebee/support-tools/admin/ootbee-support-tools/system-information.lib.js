@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2016 - 2020 Order of the Bee
+ * Copyright (C) 2016 - 2025 Order of the Bee
  *
  * This file is part of OOTBee Support Tools
  *
@@ -18,7 +18,7 @@
  */
 /*
  * Linked to Alfresco
- * Copyright (C) 2005 - 2020 Alfresco Software Limited.
+ * Copyright (C) 2005 - 2025 Alfresco Software Limited.
  */
 
 /* exported buildSystemInformation */
@@ -54,5 +54,5 @@ function buildSystemInformation()
     duration = Packages.net.time4j.Duration.of(runtime.getUptime(), Packages.net.time4j.ClockUnit.MILLIS).with(Packages.net.time4j.Duration.STD_PERIOD);
     prettyUptime = Packages.net.time4j.PrettyTime.of(Packages.org.springframework.extensions.surf.util.I18NUtil.getLocale()).print(duration, Packages.net.time4j.format.TextWidth.WIDE);
     model.upTime = prettyUptime;
-    model.startTime = runtime.getStartTime();
+    model.startTime = Packages.java.text.DateFormat.getDateTimeInstance(3, 3, Packages.org.springframework.extensions.surf.util.I18NUtil.getLocale()).format(new Packages.java.util.Date(runtime.getStartTime()));
 }

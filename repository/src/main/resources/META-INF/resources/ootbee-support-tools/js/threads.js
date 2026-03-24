@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2016 - 2020 Order of the Bee
+ * Copyright (C) 2016 - 2025 Order of the Bee
  *
  * This file is part of OOTBee Support Tools
  *
@@ -19,7 +19,7 @@
  */
 /*
  * Linked to Alfresco
- * Copyright (C) 2005 - 2020 Alfresco Software Limited.
+ * Copyright (C) 2005 - 2025 Alfresco Software Limited.
  */
 
 /* global Admin: false, el: false, alert: false */
@@ -158,7 +158,7 @@ Admin.addEventListener(window, 'load', function()
 
     AdminTD.showTab = function showTab(tabName)
     {
-        var allTabs, i, selectors;
+        var allTabs, i, selectors, copyCurrentEl;
 
         allTabs = document.getElementsByClassName('thread');
         for (i = 0; i < allTabs.length; i++)
@@ -180,7 +180,11 @@ Admin.addEventListener(window, 'load', function()
             if (selectors[i].id === 's' + tabName)
             {
                 Admin.addClass(selectors[i], 'selected');
-                el('copycurrent').setAttribute('onclick', 'AdminTD.copyToClipboard("' + tabName + '");');
+                copyCurrentEl = el('copycurrent');
+                if (copyCurrentEl)
+                {
+                    copyCurrentEl.setAttribute('onclick', 'AdminTD.copyToClipboard("' + tabName + '");');
+                }
                 el('savecurrent').setAttribute('onclick', 'AdminTD.saveTextAsFile("' + tabName + '");');
             }
             else

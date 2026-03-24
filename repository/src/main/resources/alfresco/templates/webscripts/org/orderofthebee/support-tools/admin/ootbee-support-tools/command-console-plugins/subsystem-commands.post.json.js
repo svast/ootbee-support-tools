@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2016 - 2020 Order of the Bee
+ * Copyright (C) 2016 - 2025 Order of the Bee
  *
  * This file is part of OOTBee Support Tools
  *
@@ -19,7 +19,7 @@
  */
 /*
  * Linked to Alfresco
- * Copyright (C) 2005 - 2020 Alfresco Software Limited.
+ * Copyright (C) 2005 - 2025 Alfresco Software Limited.
  */
 
 /* global json: false */
@@ -95,6 +95,15 @@ function matchIds(instanceId, requestedId)
     }
 
     return result;
+}
+
+function getSensitiveKeys()
+{
+    var ctxt, globalProperties, sensitiveKeys;
+    ctxt = Packages.org.springframework.web.context.ContextLoader.getCurrentWebApplicationContext();
+    globalProperties = ctxt.getBean('global-properties', Packages.java.util.Properties);
+    sensitiveKeys = globalProperties["ootbee-support-tools.systeminformation.sensitiveKeys"].split(',');
+    return sensitiveKeys;
 }
 
 function getChildApplicationContextFactoryForManager(childApplicationContextManager, instanceId)
@@ -222,11 +231,13 @@ function listInstances()
 
 function listProperties(reqArgs)
 {
-    var factoryOrManager, propertyNameIterator, mutableProperties, immutableProperties, propertyName, property;
+    var withSensitiveValues, sensitiveKeys, factoryOrManager, propertyNameIterator, mutableProperties, immutableProperties, propertyName, property, keySensitive, keyIdx, key;
 
     if (reqArgs.length >= 1)
     {
         model.requestedInstanceId = reqArgs[0];
+        withSensitiveValues = (reqArgs[1] || '') === 'withSensitiveValues';
+        sensitiveKeys = getSensitiveKeys();
         factoryOrManager = resolveSubsystemInstance(model.requestedInstanceId);
 
         if (factoryOrManager)
@@ -245,6 +256,24 @@ function listProperties(reqArgs)
                     value : factoryOrManager.getProperty(propertyName),
                     description : factoryOrManager.getDescription(propertyName)
                 };
+
+                if (!withSensitiveValues)
+                {
+                    keySensitive = false;
+                    for (keyIdx = 0; !keySensitive && keyIdx < sensitiveKeys.length; keyIdx++)
+                    {
+                        key = sensitiveKeys[keyIdx];
+                        if (key.trim().length > 0)
+                        {
+                            keySensitive = property.key.toLowerCase().endsWith(key.trim().toLowerCase());
+                        }
+                    }
+
+                    if (keySensitive)
+                    {
+                        property.value = '***';
+                    }
+                }
 
                 if (factoryOrManager.isUpdateable(propertyName))
                 {

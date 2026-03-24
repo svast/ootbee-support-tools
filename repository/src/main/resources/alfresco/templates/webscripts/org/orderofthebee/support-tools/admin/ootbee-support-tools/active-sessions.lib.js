@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2016 - 2020 Order of the Bee
+ * Copyright (C) 2016 - 2025 Order of the Bee
  *
  * This file is part of OOTBee Support Tools
  *
@@ -18,7 +18,7 @@
  */
 /*
  * Linked to Alfresco
- * Copyright (C) 2005 - 2020 Alfresco Software Limited.
+ * Copyright (C) 2005 - 2025 Alfresco Software Limited.
  */
 
 function buildConnectionPoolData()
@@ -33,11 +33,11 @@ function buildConnectionPoolData()
     connectionPoolData = {
         initialSize : dataSource.initialSize,
         numActive : dataSource.numActive,
-        maxActive : dataSource.maxActive,
+        maxActive : dataSource.maxActive || dataSource.maxTotal, // dbcp2 renamed the property
         minIdle : dataSource.minIdle,
         numIdle : dataSource.numIdle,
         maxIdle : dataSource.maxIdle,
-        maxWait : dataSource.maxWait,
+        maxWait : dataSource.maxWait || dataSource.maxWaitMillis, // dbcp2 renamed the property
         url : dataSource.url,
         driverClassName : dataSource.driverClassName
     };

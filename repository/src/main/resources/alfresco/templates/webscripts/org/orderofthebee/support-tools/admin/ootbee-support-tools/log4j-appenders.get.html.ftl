@@ -1,5 +1,5 @@
 <#-- 
-Copyright (C) 2016 - 2020 Order of the Bee
+Copyright (C) 2016 - 2025 Order of the Bee
 
 This file is part of OOTBee Support Tools
 
@@ -17,7 +17,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with OOTBee Support Tools. If not, see <http://www.gnu.org/licenses/>.
 
 Linked to Alfresco
-Copyright (C) 2005 - 2020 Alfresco Software Limited.
+Copyright (C) 2005 - 2025 Alfresco Software Limited.
  
   -->
 
@@ -59,7 +59,11 @@ Copyright (C) 2005 - 2020 Alfresco Software Limited.
             <div class="detail">
                 <div class="label">${key?html}:</div>
                 <div class="value">
-                    <@renderValue modelObject[key] />
+                    <#if modelObject[key]??>
+                        <@renderValue modelObject[key] />
+                    <#else>
+                        null
+                    </#if>
                 </div>
             </div>
         </#if>
@@ -75,7 +79,7 @@ Copyright (C) 2005 - 2020 Alfresco Software Limited.
         <#elseif value?is_sequence>
             <ol>
                 <#list value as element>
-                    <li><@renderValue element /></li>
+                    <li><#if element??><@renderValue element /><#else>null</#if></li>
                 </#list>
             </ol>
         <#elseif !value?is_string>

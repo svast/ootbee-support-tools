@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2016 - 2020 Order of the Bee
+ * Copyright (C) 2016 - 2025 Order of the Bee
  *
  * This file is part of OOTBee Support Tools
  *
@@ -18,7 +18,7 @@
  * <http://www.gnu.org/licenses/>.
  *
  * Linked to Alfresco
- * Copyright (C) 2005 - 2020 Alfresco Software Limited.
+ * Copyright (C) 2005 - 2025 Alfresco Software Limited.
  */
 package org.orderofthebee.addons.support.tools.share;
 
@@ -32,7 +32,7 @@ import org.springframework.extensions.webscripts.WebScriptRequest;
 import org.springframework.extensions.webscripts.WebScriptResponse;
 
 /**
- * @author Axel Faust, <a href="http://acosix.de">Acosix GmbH</a>
+ * @author Axel Faust
  */
 public class LogFileGet extends AbstractLogFileWebScript
 {
@@ -44,7 +44,7 @@ public class LogFileGet extends AbstractLogFileWebScript
     @Override
     public void execute(final WebScriptRequest req, final WebScriptResponse res) throws IOException
     {
-        final String filePath = this.getFilePath(req);
+        final String filePath = LogFileHandler.getFilePath(req);
 
         final Map<String, Object> model = new HashMap<>();
         final Status status = new Status();
@@ -55,22 +55,8 @@ public class LogFileGet extends AbstractLogFileWebScript
         final String attachParam = req.getParameter("a");
         final boolean attach = attachParam != null && Boolean.parseBoolean(attachParam);
 
-        this.logFileHandler.handleLogFileRequest(filePath, attach, req, res, model);
+        final WebScriptRequestWrapper reqW = new WebScriptRequestWrapper(req);
+        final WebScriptResponseWrapper resW = new WebScriptResponseWrapper(res);
+        this.logFileHandler.handleLogFileRequest(filePath, attach, () -> reqW, () -> resW, model);
     }
-
-    protected String getFilePath(final WebScriptRequest req)
-    {
-        final String servicePath = req.getServicePath();
-        final String matchPath = req.getServiceMatch().getPath();
-        String filePath = servicePath.substring(servicePath.indexOf(matchPath) + matchPath.length());
-
-        if (!filePath.startsWith("/"))
-        {
-            filePath = "/" + filePath;
-        }
-
-        return filePath;
-
-    }
-
 }

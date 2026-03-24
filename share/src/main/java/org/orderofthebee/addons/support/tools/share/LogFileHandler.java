@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2016 - 2020 Order of the Bee
+ * Copyright (C) 2016 - 2025 Order of the Bee
  *
  * This file is part of OOTBee Support Tools
  *
@@ -18,48 +18,48 @@
  * <http://www.gnu.org/licenses/>.
  *
  * Linked to Alfresco
- * Copyright (C) 2005 - 2020 Alfresco Software Limited.
+ * Copyright (C) 2005 - 2025 Alfresco Software Limited.
  */
 package org.orderofthebee.addons.support.tools.share;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import org.alfresco.util.ParameterCheck;
 import org.alfresco.util.TempFileProvider;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
-import org.apache.log4j.Appender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
-import org.apache.log4j.spi.LoggerRepository;
+import org.orderofthebee.addons.support.tools.share.log.Log4jCompatibilityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.extensions.webscripts.Status;
 import org.springframework.extensions.webscripts.WebScriptException;
 import org.springframework.extensions.webscripts.WebScriptRequest;
-import org.springframework.extensions.webscripts.WebScriptResponse;
 
 /**
  * This class is used to consolidate the log file handling logic that may need to be shared between web script and servlet based log file
  * handling components since <a href="https://issues.alfresco.com/jira/browse/ALF-21949">ALF-21949</a> breaks streaming use cases for web
  * scripts.
  *
- * @author Axel Faust, <a href="http://acosix.de">Acosix GmbH</a>
+ * @author Axel Faust
  */
 public class LogFileHandler
 {
 
-    private static final Logger LOGGER = Logger.getLogger(LogFileHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LogFileHandler.class);
+
+    private static final String LOG_FILE_PATH_MSG_PREFIX = "The log file path ";
+
+    private static final String LOG_FILE_RESOLUTION_ERROR_MSG_SUFFIX = " could not be resolved to a valid log file - access to any other file system contents is forbidden via this web script";
+
+    private static final String LOG_FILE_EXIST_ERROR_MSG_SUFFIX = " could not be resolved to an existing log file";
 
     protected ContentStreamer contentStreamer;
 
@@ -67,132 +67,72 @@ public class LogFileHandler
      * Validates a single log file path and resolves it to a file handle.
      *
      * @param filePath
-     *            the file path to validate
+     *     the file path to validate
      * @return the resolved file handle if the file path is valid and allowed to be accessed
      *
      * @throws WebScriptException
-     *             if access to the log file is prohibited
+     *     if access to the log file is prohibited
      */
     protected static File validateFilePath(final String filePath)
     {
         ParameterCheck.mandatoryString("filePath", filePath);
 
-        final Path path = Paths.get(filePath);
-        boolean pathAllowed = false;
-        final List<Logger> allLoggers = LogFileHandler.getAllLoggers();
-
-        for (final Logger logger : allLoggers)
-        {
-            @SuppressWarnings("unchecked")
-            final Enumeration<Appender> allAppenders = logger.getAllAppenders();
-            while (allAppenders.hasMoreElements() && !pathAllowed)
+        final AtomicReference<File> file = new AtomicReference<>();
+        Log4jCompatibilityUtils.LOG4J_HELPER.validateFilePath(filePath, s -> {
+            throw new WebScriptException(Status.STATUS_FORBIDDEN, LOG_FILE_PATH_MSG_PREFIX + s + LOG_FILE_RESOLUTION_ERROR_MSG_SUFFIX);
+        }, p -> {
+            final File f = p.toFile();
+            if (!f.exists())
             {
-                final Appender appender = allAppenders.nextElement();
-                if (appender instanceof FileAppender)
-                {
-                    final String appenderFile = ((FileAppender) appender).getFile();
-                    final File configuredFile = new File(appenderFile);
-                    final Path configuredFilePath = configuredFile.toPath().toAbsolutePath().getParent();
-                    pathAllowed = pathAllowed
-                            || (path.startsWith(configuredFilePath) && path.getFileName().toString().startsWith(configuredFile.getName()));
-                }
+                throw new WebScriptException(Status.STATUS_NOT_FOUND, LOG_FILE_PATH_MSG_PREFIX + p + LOG_FILE_EXIST_ERROR_MSG_SUFFIX);
             }
-        }
+            file.set(f);
+        });
 
-        if (!pathAllowed)
-        {
-            throw new WebScriptException(Status.STATUS_FORBIDDEN, "The log file path " + filePath
-                    + " could not be resolved to a valid log file - access to any other file system contents is forbidden via this web script");
-        }
-
-        final File file = path.toFile();
-
-        if (!file.exists())
-        {
-            throw new WebScriptException(Status.STATUS_NOT_FOUND,
-                    "The log file path " + filePath + " could not be resolved to an existing log file");
-        }
-
-        return file;
+        return file.get();
     }
 
     /**
      * Validates a log file paths and resolves them to file handles.
      *
      * @param filePaths
-     *            the file paths to validate
+     *     the file paths to validate
      * @return the resolved file handles if the file paths are valid and allowed to be accessed
      *
      * @throws WebScriptException
-     *             if access to any log file is prohibited
+     *     if access to any log file is prohibited
      */
     protected static List<File> validateFilePaths(final List<String> filePaths)
     {
         ParameterCheck.mandatoryCollection("filePaths", filePaths);
 
-        final List<Path> paths = new ArrayList<>();
-        for (final String filePath : filePaths)
-        {
-            paths.add(Paths.get(filePath));
-        }
-
-        boolean allPathsAllowed = true;
-        final List<Logger> allLoggers = LogFileHandler.getAllLoggers();
         final List<File> files = new ArrayList<>();
-
-        for (final Logger logger : allLoggers)
-        {
-            @SuppressWarnings("unchecked")
-            final Enumeration<Appender> allAppenders = logger.getAllAppenders();
-            while (allAppenders.hasMoreElements() && allPathsAllowed)
+        Log4jCompatibilityUtils.LOG4J_HELPER.validateFilePath(filePaths, s -> {
+            throw new WebScriptException(Status.STATUS_FORBIDDEN, LOG_FILE_PATH_MSG_PREFIX + s + LOG_FILE_RESOLUTION_ERROR_MSG_SUFFIX);
+        }, p -> {
+            final File f = p.toFile();
+            if (!f.exists())
             {
-                final Appender appender = allAppenders.nextElement();
-                if (appender instanceof FileAppender)
-                {
-                    final String appenderFile = ((FileAppender) appender).getFile();
-                    final File configuredFile = new File(appenderFile);
-                    final Path configuredFilePath = configuredFile.toPath().toAbsolutePath().getParent();
-
-                    for (final Path path : paths)
-                    {
-                        allPathsAllowed = allPathsAllowed && path.startsWith(configuredFilePath)
-                                && path.getFileName().toString().startsWith(configuredFile.getName());
-
-                        if (!allPathsAllowed)
-                        {
-                            throw new WebScriptException(Status.STATUS_FORBIDDEN, "The log file path " + path
-                                    + " could not be resolved to a valid log file - access to any other file system contents is forbidden via this web script");
-                        }
-
-                        final File file = path.toFile();
-                        if (!file.exists())
-                        {
-                            throw new WebScriptException(Status.STATUS_NOT_FOUND,
-                                    "The log file path " + path + " could not be resolved to an existing log file");
-                        }
-
-                        files.add(file);
-                    }
-                }
+                throw new WebScriptException(Status.STATUS_NOT_FOUND, LOG_FILE_PATH_MSG_PREFIX + p + LOG_FILE_EXIST_ERROR_MSG_SUFFIX);
             }
-        }
+            files.add(f);
+        });
 
         return files;
     }
 
-    protected static List<Logger> getAllLoggers()
+    protected static String getFilePath(final WebScriptRequest req)
     {
-        final LoggerRepository loggerRepository = LogManager.getLoggerRepository();
-        final List<Logger> loggers = new ArrayList<>();
+        final String servicePath = req.getServicePath();
+        final String matchPath = req.getServiceMatch().getPath();
+        String filePath = servicePath.substring(servicePath.indexOf(matchPath) + matchPath.length());
 
-        loggers.add(loggerRepository.getRootLogger());
-        @SuppressWarnings("unchecked")
-        final Enumeration<Logger> currentLoggers = loggerRepository.getCurrentLoggers();
-        while (currentLoggers.hasMoreElements())
+        if (!filePath.startsWith("/"))
         {
-            loggers.add(currentLoggers.nextElement());
+            filePath = "/" + filePath;
         }
-        return loggers;
+
+        return filePath;
     }
 
     protected static String determineMimetypeFromFileName(final File file)
@@ -229,24 +169,15 @@ public class LogFileHandler
 
     /**
      * @param contentStreamer
-     *            the contentStreamer to set
+     *     the contentStreamer to set
      */
     public void setContentStreamer(final ContentStreamer contentStreamer)
     {
         this.contentStreamer = contentStreamer;
     }
 
-    protected void handleLogFileRequest(final String filePath, final boolean attach, final WebScriptRequest req,
-            final WebScriptResponse res, final Map<String, Object> model) throws IOException
-    {
-        final File file = validateFilePath(filePath);
-
-        final String mimetype = determineMimetypeFromFileName(file);
-        this.contentStreamer.streamContent(req, res, file, file.lastModified(), attach, file.getName(), model, mimetype);
-    }
-
-    protected void handleLogFileRequest(final String filePath, final boolean attach, final HttpServletRequest req,
-            final HttpServletResponse res, final Map<String, Object> model) throws IOException
+    protected void handleLogFileRequest(final String filePath, final boolean attach, final Supplier<Request> req,
+            final Supplier<Response> res, final Map<String, Object> model) throws IOException
     {
         try
         {
@@ -257,41 +188,24 @@ public class LogFileHandler
         }
         catch (final WebScriptException wsex)
         {
-            if (!res.isCommitted())
+            Response rres = res.get();
+            if (!rres.isCommitted())
             {
-                res.reset();
-                res.sendError(wsex.getStatus(), wsex.getMessage());
+                rres.reset();
+                rres.sendError(wsex.getStatus(), wsex.getMessage());
             }
-            else
+            else if (!(rres instanceof WebScriptResponseWrapper))
             {
                 LOGGER.info("Could not send error via committed response", wsex);
             }
-        }
-    }
-
-    protected void handleLogZipRequest(final List<String> filePaths, final WebScriptRequest req, final WebScriptResponse res,
-            final Map<String, Object> model) throws IOException
-    {
-        final List<File> files = LogFileHandler.validateFilePaths(filePaths);
-        final File logFileZip = TempFileProvider.createTempFile("ootbee-support-tools-logFiles", "zip");
-        try
-        {
-            this.createZip(files, logFileZip);
-
-            this.contentStreamer.streamContent(req, res, logFileZip, logFileZip.lastModified(), false, "log-files.zip", model,
-                    "application/zip");
-        }
-        finally
-        {
-            // eager cleanup
-            if (!logFileZip.delete())
+            else
             {
-                logFileZip.deleteOnExit();
+                throw wsex;
             }
         }
     }
 
-    protected void handleLogZipRequest(final List<String> filePaths, final HttpServletRequest req, final HttpServletResponse res,
+    protected void handleLogZipRequest(final List<String> filePaths, final Supplier<Request> req, final Supplier<Response> res,
             final Map<String, Object> model) throws IOException
     {
         try
@@ -308,7 +222,7 @@ public class LogFileHandler
             finally
             {
                 // eager cleanup
-                if (!logFileZip.delete())
+                if (!Files.deleteIfExists(logFileZip.toPath()))
                 {
                     logFileZip.deleteOnExit();
                 }
@@ -316,14 +230,19 @@ public class LogFileHandler
         }
         catch (final WebScriptException wsex)
         {
-            if (!res.isCommitted())
+            Response rres = res.get();
+            if (!rres.isCommitted())
             {
-                res.reset();
-                res.sendError(wsex.getStatus(), wsex.getMessage());
+                rres.reset();
+                rres.sendError(wsex.getStatus(), wsex.getMessage());
+            }
+            else if (!(rres instanceof WebScriptResponseWrapper))
+            {
+                LOGGER.info("Could not send error via committed response", wsex);
             }
             else
             {
-                LOGGER.info("Could not send error via committed response", wsex);
+                throw wsex;
             }
         }
     }

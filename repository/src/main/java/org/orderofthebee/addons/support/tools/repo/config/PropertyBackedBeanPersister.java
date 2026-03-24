@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2016 - 2020 Order of the Bee
+ * Copyright (C) 2016 - 2025 Order of the Bee
  *
  * This file is part of OOTBee Support Tools
  *
@@ -18,7 +18,7 @@
  * <http://www.gnu.org/licenses/>.
  *
  * Linked to Alfresco
- * Copyright (C) 2005 - 2020 Alfresco Software Limited.
+ * Copyright (C) 2005 - 2025 Alfresco Software Limited.
  */
 package org.orderofthebee.addons.support.tools.repo.config;
 
@@ -280,12 +280,21 @@ public class PropertyBackedBeanPersister implements InitializingBean
 
         // for some reason most subsystem beans are by default not configured to broadcast property changes
         // JMX only works because it is the only tool / component dealing with this, and only performs direct calls
-        if (propertyBackedBean instanceof AbstractPropertyBackedBean)
+        try
         {
-            ((AbstractPropertyBackedBean) propertyBackedBean).setSaveSetProperty(true);
+            if (propertyBackedBean instanceof AbstractPropertyBackedBean)
+            {
+                ((AbstractPropertyBackedBean) propertyBackedBean).setSaveSetProperty(false);
+            }
+            this.initializeFromPersistedProperties(name, propertyBackedBean);
         }
-
-        this.initializeFromPersistedProperties(name, propertyBackedBean);
+        finally
+        {
+            if (propertyBackedBean instanceof AbstractPropertyBackedBean)
+            {
+                ((AbstractPropertyBackedBean) propertyBackedBean).setSaveSetProperty(true);
+            }
+        }
     }
 
     protected void handleRemovedPropertyBackedBean(final PropertyBackedBean propertyBackedBean, final boolean permanent)

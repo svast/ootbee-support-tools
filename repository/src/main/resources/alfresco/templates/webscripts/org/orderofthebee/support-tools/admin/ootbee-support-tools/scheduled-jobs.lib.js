@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2016 - 2020 Order of the Bee
+ * Copyright (C) 2016 - 2025 Order of the Bee
  *
  * This file is part of OOTBee Support Tools
  *
@@ -18,7 +18,7 @@
  */
 /*
  * Linked to Alfresco
- * Copyright (C) 2005 - 2020 Alfresco Software Limited.
+ * Copyright (C) 2005 - 2025 Alfresco Software Limited.
  */
 
 function determineQuartzMajorVersion(scheduler)
@@ -131,6 +131,17 @@ function buildScheduledJobsData()
             }
         }
     }
+
+    jobTriggers.sort(function(a, b)
+    {
+        var res;
+        res = a.triggerGroup.localeCompare(b.triggerGroup);
+        if (res === 0)
+        {
+            res = a.triggerName.localeCompare(b.triggerName);
+        }
+        return res;
+    });
 
     model.jobTriggers = jobTriggers;
     model.locale = Packages.org.springframework.extensions.surf.util.I18NUtil.getLocale().toString();

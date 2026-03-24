@@ -12,6 +12,22 @@
         </property>
     </bean>
 
+    <bean parent="dictionaryModelBootstrap">
+        <property name="models">
+            <list>
+                <value>alfresco/module/ootbee-${project.artifactId}/model/jsconsole-model.xml</value>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="jsConsoleOutput" factory-bean="cacheFactory" factory-method="createCache">
+        <constructor-arg value="cache.jsConsoleOutput" />
+    </bean>
+
+    <bean id="jsConsoleResult" factory-bean="cacheFactory" factory-method="createCache">
+        <constructor-arg value="cache.jsConsoleResult" />
+    </bean>
+
     <bean name="propertyBackedBeansPersisterSharedCache" factory-bean="cacheFactory" factory-method="createCache">
         <constructor-arg value="cache.propertyBackedBeansPersisterSharedCache" />
     </bean>
@@ -42,19 +58,6 @@
             value="${ootbee-support-tools.propertyBackedBeanPersister.processLegacyJmxKeysOnRemoveProperties}" />
     </bean>
 
-    <bean id="webscript.org.orderofthebee.support-tools.admin.ootbee-support-tools.log4j-loggers.get"
-        class="org.orderofthebee.addons.support.tools.repo.web.scripts.LogStateWebScript" parent="webscript" />
-    <bean id="webscript.org.orderofthebee.support-tools.admin.ootbee-support-tools.log4j-loggers.post"
-        class="org.orderofthebee.addons.support.tools.repo.web.scripts.LogStateWebScript" parent="webscript" />
-    <bean id="webscript.org.orderofthebee.support-tools.admin.ootbee-support-tools.log4j-logger.post"
-        class="org.orderofthebee.addons.support.tools.repo.web.scripts.LogStateWebScript" parent="webscript" />
-    <bean id="webscript.org.orderofthebee.support-tools.admin.ootbee-support-tools.log4j-logger.put"
-        class="org.orderofthebee.addons.support.tools.repo.web.scripts.LogStateWebScript" parent="webscript" />
-    <bean id="webscript.org.orderofthebee.support-tools.admin.ootbee-support-tools.log4j-loggers.delete"
-        class="org.orderofthebee.addons.support.tools.repo.web.scripts.LogStateWebScript" parent="webscript" />
-    <bean id="webscript.org.orderofthebee.support-tools.admin.ootbee-support-tools.log4j-logger.delete"
-        class="org.orderofthebee.addons.support.tools.repo.web.scripts.LogStateWebScript" parent="webscript" />
-
     <bean id="webscript.org.orderofthebee.support-tools.admin.ootbee-support-tools.log4j-log-file.get"
         class="org.orderofthebee.addons.support.tools.repo.web.scripts.LogFileGet" parent="webscript">
         <property name="delegate" ref="webscript.content.streamer" />
@@ -71,6 +74,66 @@
     <bean id="webscript.org.orderofthebee.support-tools.admin.ootbee-support-tools.log4j-snapshot-complete.get"
         class="org.orderofthebee.addons.support.tools.repo.web.scripts.LogSnapshotComplete" parent="webscript">
         <property name="delegate" ref="webscript.content.streamer" />
+    </bean>
+
+    <bean id="webscript.org.orderofthebee.support-tools.jsconsole.execute.post"
+        class="org.orderofthebee.addons.support.tools.repo.jsconsole.ExecuteWebscript" parent="webscript">
+        <property name="scriptUtils" ref="utilsScript" />
+        <property name="transactionService" ref="TransactionService" />
+        <property name="nodeService" ref="NodeService" />
+        <property name="permissionService" ref="PermissionService" />
+        <property name="jsProcessor" ref="javaScriptProcessor" />
+        <property name="printOutputCache" ref="jsConsoleOutput" />
+        <property name="resultCache" ref="jsConsoleResult" />
+        <property name="dumpService">
+            <bean class="org.orderofthebee.addons.support.tools.repo.jsconsole.DumpService">
+                <property name="nodeService" ref="NodeService" />
+                <property name="permissionService" ref="PermissionService" />
+                <property name="namespaceService" ref="NamespaceService" />
+                <property name="versionService" ref="VersionService" />
+                <property name="contentService" ref="ContentService" />
+                <property name="dictionaryService" ref="DictionaryService" />
+                <property name="workflowService" ref="WorkflowService" />
+                <property name="ruleService" ref="RuleService" />
+                <property name="tagService" ref="TaggingService" />
+                <property name="webDavService" ref="webdavService" />
+                <property name="auditService" ref="AuditService" />
+                <property name="sysAdminParams" ref="sysAdminParams" />
+                <property name="lockService" ref="LockService" />
+                <property name="dumpLimit" value="-1" />
+            </bean>
+        </property>
+        <property name="preRollScriptClasspath" value="alfresco/module/ootbee-${project.artifactId}/scripts/jsconsole-pre-roll-script.js" />
+        <property name="postRollScriptClasspath" value="alfresco/module/ootbee-${project.artifactId}/scripts/jsconsole-post-roll-script.js" />
+        <property name="allowUnrestrictedScripts" value="${ootbee-support-tools.js-console.allowUnrestrictedScripts}"/>
+    </bean>
+
+    <bean id="webscript.org.orderofthebee.support-tools.jsconsole.executionResult.get" class="org.orderofthebee.addons.support.tools.repo.jsconsole.ExecutionResultGet" parent="webscript">
+        <property name="printOutputCache" ref="jsConsoleOutput" />
+        <property name="resultCache" ref="jsConsoleResult" />
+    </bean>
+
+    <bean id="webscript.org.orderofthebee.support-tools.jsconsole.tern.alfresco-script-api.get" class="org.orderofthebee.addons.support.tools.repo.jsconsole.AlfrescoScriptAPITernGet" parent="webscript">
+        <property name="namespaceService" ref="NamespaceService" />
+        <property name="dictionaryService" ref="DictionaryService" />
+        <property name="scriptService" ref="ScriptService" />
+        <property name="personService" ref="PersonService" />
+        <property name="actionService" ref="ActionService" />
+        <property name="serviceRegistry" ref="ServiceRegistry" />
+        <property name="scriptProcessor" ref="javaScriptProcessor" />
+        <property name="properties">
+            <bean class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+                <property name="locations">
+                    <list>
+                        <value>classpath*:alfresco/module/*/jsconsole-tern.properties</value>
+                        <value>classpath*:alfresco/extension/jsconsole-tern.properties</value>
+                    </list>
+                </property>
+                <property name="propertiesPersister">
+                    <bean class="org.alfresco.config.AlfrescoPropertiesPersister"/>
+                </property>
+            </bean>
+        </property>
     </bean>
 
 </beans>

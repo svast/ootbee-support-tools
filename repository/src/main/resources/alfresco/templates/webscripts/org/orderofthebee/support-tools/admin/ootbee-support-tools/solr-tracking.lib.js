@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2017 Cesar Capillas
- * Copyright (C) 2016 - 2020 Order of the Bee
+ * Copyright (C) 2016 - 2025 Order of the Bee
  *
  * This file is part of OOTBee Support Tools
  *
@@ -19,7 +19,7 @@
  */
 /*
  * Linked to Alfresco
- * Copyright (C) 2005 - 2020 Alfresco Software Limited.
+ * Copyright (C) 2005 - 2025 Alfresco Software Limited.
  */
 function buildPropertyGetter(ctxt)
 {
@@ -57,7 +57,7 @@ function buildPropertyGetter(ctxt)
 /* exported loadSolrSummaryAndStatus */
 function loadSolrSummaryAndStatus()
 {
-    var ctxt, propertyGetter, indexSubsystem, solrContextFactory, solrContext, solrAdminClient, args, trackingSummaryResponse, trackingSummary, trackingStatusResponse, trackingStatus, coreNames;
+    var ctxt, propertyGetter, indexSubsystem, solrContextFactory, solrContext, solrAdminClient, solrAdminNativeClient, args, trackingSummaryResponse, trackingSummary, trackingStatusResponse, trackingStatus, coreNames, idx;
 
     ctxt = Packages.org.springframework.web.context.ContextLoader.getCurrentWebApplicationContext();
     propertyGetter = buildPropertyGetter(ctxt);
@@ -92,6 +92,17 @@ function loadSolrSummaryAndStatus()
             return a.localeCompare(b);
         });
         model.coreNames = coreNames;
+
+        if (/^solr([6])?$/.test(indexSubsystem))
+        {
+            solrAdminNativeClient = solrContext
+                    .getBean('solrAdminNativeClient', Packages.org.orderofthebee.addons.support.tools.repo.search.SolrAdminNativeClient);
+            model.cascadeTracker = [];
+            for (idx = 0; idx < coreNames.length; idx++) {
+                model.cascadeTracker[coreNames[idx]] = solrAdminNativeClient.getCascadeTrackerPendingCount(coreNames[idx]);
+            }
+        }
+
     }
     else
     {

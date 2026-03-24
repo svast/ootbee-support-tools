@@ -5,7 +5,7 @@
 
     <groupId>org.orderofthebee.support-tools</groupId>
     <artifactId>support-tools-parent</artifactId>
-    <version>1.2.0.0-SNAPSHOT</version>
+    <version>1.2.3.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>OOTBee Support Tools - Parent</name>
@@ -69,41 +69,53 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <!-- Java 7 is out of support - everything will be built for Java 8 by default even if Alfresco up to 5.0 officially supports Java 7 -->
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <!-- Everything will be built for Java 8 by default -->
+        <!-- Note: using 11 or newer fails during AMP assembly -->
+        <java.version>8</java.version>
 
-        <maven.enforcer.version>3.0.0-M3</maven.enforcer.version>
-        <maven.clean.version>3.1.0</maven.clean.version>
-        <maven.resources.version>3.1.0</maven.resources.version>
-        <maven.dependency.version>3.1.1</maven.dependency.version>
-        <maven.compiler.version>3.8.1</maven.compiler.version>
-        <maven.source.version>3.2.1</maven.source.version>
-        <maven.javadoc.version>3.1.1</maven.javadoc.version>
-        <maven.jar.version>3.2.0</maven.jar.version>
-        <!-- using milestone versions is ugly, but apparently Alfresco SDK devs have no qualms   -->
-        <maven.surefire.version>3.0.0-M4</maven.surefire.version>
-        <maven.failsafe.version>3.0.0-M4</maven.failsafe.version>
+        <maven.enforcer.version>3.6.1</maven.enforcer.version>
+        <maven.clean.version>3.5.0</maven.clean.version>
+        <maven.resources.version>3.3.1</maven.resources.version>
+        <maven.dependency.version>3.8.1</maven.dependency.version>
+        <maven.compiler.version>3.14.0</maven.compiler.version>
+        <maven.source.version>3.3.1</maven.source.version>
+        <maven.javadoc.version>3.11.2</maven.javadoc.version>
+        <maven.jar.version>3.4.2</maven.jar.version>
+        <maven.surefire.version>3.5.3</maven.surefire.version>
+        <maven.failsafe.version>3.5.3</maven.failsafe.version>
         <!-- apparently SDK 4 only works with very old version due to API conflicts -->
+        <!-- also only works with JDK before 11 -->
         <maven.assembly.version>2.6</maven.assembly.version>
-        <maven.install.version>3.0.0-M1</maven.install.version>
-        <maven.deploy.version>3.0.0-M1</maven.deploy.version>
-        <maven.sonatype.version>1.6.8</maven.sonatype.version>
+        <maven.install.version>3.1.4</maven.install.version>
+        <maven.deploy.version>3.1.4</maven.deploy.version>
+
+        <!-- we use the Sonatype plugin for deploy -->
+        <maven.deploy.skip>true</maven.deploy.skip>
+
+        <maven.sonatype.version>0.8.0</maven.sonatype.version>
 
         <maven.acosix.jshint.version>1.0.0</maven.acosix.jshint.version>
         <maven.alchim.yuicompressor.version>1.5.1</maven.alchim.yuicompressor.version>
-
-        <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/</sonatypeOssDistMgmtSnapshotsUrl>
         
         <!-- purely SDK 4 stuff from here on out -->
-        <alfresco.sdk.version>4.0.0</alfresco.sdk.version>
+        <alfresco.sdk.version>4.12.0</alfresco.sdk.version>
         <alfresco.groupId>org.alfresco</alfresco.groupId>
         <alfresco.bomDependencyArtifactId>acs-community-packaging</alfresco.bomDependencyArtifactId>
         <alfresco.platform.version>6.1.2-ga</alfresco.platform.version>
         <alfresco.share.version>6.1.0</alfresco.share.version>
-        
+        <alfresco.search.version>1.2.0</alfresco.search.version>
+
+        <!-- baseline versions -->
+        <alfresco.slf4j.version>1.7.25</alfresco.slf4j.version>
+        <alfresco74.log4j2.version>2.19.0</alfresco74.log4j2.version>
+
+        <alfresco.docker.platform.version>${alfresco.platform.version}</alfresco.docker.platform.version>
+        <alfresco.docker.share.version>${alfresco.share.version}</alfresco.docker.share.version>
         <docker.acs.image>alfresco/alfresco-content-repository-community</docker.acs.image>
+        <docker.acs.dockerfile>Dockerfile</docker.acs.dockerfile>
+        <docker.acs.opts></docker.acs.opts>
         <docker.share.image>alfresco/alfresco-share</docker.share.image>
+        <docker.search.opts></docker.search.opts>
         
         <acs.port>8080</acs.port>
         <acs.debug.port>8888</acs.debug.port>
@@ -114,14 +126,6 @@
     </properties>
 
     <repositories>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-
         <repository>
             <id>alfresco-public</id>
             <url>https://artifacts.alfresco.com/nexus/content/groups/public</url>
@@ -138,13 +142,6 @@
 
     <pluginRepositories>
         <pluginRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </pluginRepository>
-        <pluginRepository>
             <id>alfresco-public</id>
             <url>https://artifacts.alfresco.com/nexus/content/groups/public</url>
         </pluginRepository>
@@ -159,12 +156,12 @@
 
     <distributionManagement>
         <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+            <id>central</id>
+            <url>https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/</url>
         </repository>
         <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <id>central</id>
+            <url>https://central.sonatype.com/repository/maven-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
     
@@ -199,6 +196,20 @@
                 <artifactId>alfresco-web-framework-commons</artifactId>
                 <version>${alfresco.share.version}</version>
                 <classifier>classes</classifier>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${alfresco.slf4j.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <version>${alfresco74.log4j2.version}</version>
                 <scope>provided</scope>
             </dependency>
         </dependencies>
@@ -391,8 +402,12 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${maven.compiler.version}</version>
                     <configuration>
-                        <source>${maven.compiler.target}</source>
-                        <target>${maven.compiler.target}</target>
+                        <release>${java.version}</release>
+                        <!-- legacy if compiled with JDK 8 javac -->
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                        <parameters>true</parameters>
+                        <debuglevel>lines,vars,source</debuglevel>
                     </configuration>
                 </plugin>
 
@@ -476,6 +491,7 @@
                         <includes>
                             <include>META-INF/resources/*.js</include>
                             <include>META-INF/resources/**/*.js</include>
+                            <include>alfresco/module/*/**/*.js</include>
                             <include>alfresco/templates/*.js</include>
                             <include>alfresco/templates/**/*.js</include>
                             <include>alfresco/webscripts/*.js</include>
@@ -544,7 +560,9 @@
                                 <goal>single</goal>
                             </goals>
                             <configuration>
-                                <descriptor>src/main/assembly/amp.xml</descriptor>
+                                <descriptors>
+                                    <descriptor>src/main/assembly/amp.xml</descriptor>
+                                </descriptors>
                                 <escapeString>\</escapeString>
                                 <attach>true</attach>
                             </configuration>
@@ -570,14 +588,14 @@
                 </plugin>
 
                 <plugin>
-                    <groupId>org.sonatype.plugins</groupId>
-                    <artifactId>nexus-staging-maven-plugin</artifactId>
+                    <groupId>org.sonatype.central</groupId>
+                    <artifactId>central-publishing-maven-plugin</artifactId>
                     <version>${maven.sonatype.version}</version>
                     <extensions>true</extensions>
                     <configuration>
-                        <serverId>ossrh</serverId>
-                        <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                        <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                        <deploymentName>central.sonatype.com</deploymentName>
+                        <autoPublish>true</autoPublish>
+                        <waitUntil>published</waitUntil>
                     </configuration>
                 </plugin>
 
@@ -620,6 +638,11 @@
             <plugin>
                 <artifactId>maven-resources-plugin</artifactId>
             </plugin>
+
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
 
@@ -653,6 +676,55 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+        <profile>
+            <id>acs-docker-7.4</id>
+
+            <properties>
+                <alfresco.docker.platform.version>7.4.1</alfresco.docker.platform.version>
+                <alfresco.docker.share.version>7.4.1</alfresco.docker.share.version>
+                <docker.acs.dockerfile>DockerfileWithBuildUser</docker.acs.dockerfile>
+                <docker.acs.opts>-Dencryption.keystore.type=JCEKS -Dencryption.cipherAlgorithm=DESede/CBC/PKCS5Padding -Dencryption.keyAlgorithm=DESede -Dencryption.keystore.location=/usr/local/tomcat/shared/classes/alfresco/extension/keystore/keystore -Dmetadata-keystore.password=mp6yc0UD9e -Dmetadata-keystore.aliases=metadata -Dmetadata-keystore.metadata.password=oKIWzVdEdA -Dmetadata-keystore.metadata.algorithm=DESede -Dsolr.secureComms=secret -Dsolr.sharedSecret=secret -Dalfresco.restApi.basicAuthScheme=true</docker.acs.opts>
+                <alfresco.search.version>2.0.7</alfresco.search.version>
+                <docker.search.opts>-Dalfresco.secureComms=secret -Dalfresco.secureComms.secret=secret</docker.search.opts>
+            </properties>
+
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.activemq</groupId>
+                        <artifactId>activemq-broker</artifactId>
+                        <version>5.17.4</version>
+                        <scope>runtime</scope>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
+        </profile>
+        <profile>
+            <id>acs-docker-23.1</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+
+            <properties>
+                <alfresco.docker.platform.version>23.1.0</alfresco.docker.platform.version>
+                <alfresco.docker.share.version>23.1.0</alfresco.docker.share.version>
+                <docker.acs.dockerfile>DockerfileWithBuildUser</docker.acs.dockerfile>
+                <docker.acs.opts>-Dencryption.keystore.type=JCEKS -Dencryption.cipherAlgorithm=DESede/CBC/PKCS5Padding -Dencryption.keyAlgorithm=DESede -Dencryption.keystore.location=/usr/local/tomcat/shared/classes/alfresco/extension/keystore/keystore -Dmetadata-keystore.password=mp6yc0UD9e -Dmetadata-keystore.aliases=metadata -Dmetadata-keystore.metadata.password=oKIWzVdEdA -Dmetadata-keystore.metadata.algorithm=DESede -Dsolr.secureComms=secret -Dsolr.sharedSecret=secret -Dalfresco.restApi.basicAuthScheme=true</docker.acs.opts>
+                <alfresco.search.version>2.0.8.2</alfresco.search.version>
+                <docker.search.opts>-Dalfresco.secureComms=secret -Dalfresco.secureComms.secret=secret</docker.search.opts>
+            </properties>
+
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.activemq</groupId>
+                        <artifactId>activemq-broker</artifactId>
+                        <version>5.18.3</version>
+                        <scope>runtime</scope>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
         </profile>
     </profiles>
 </project>
